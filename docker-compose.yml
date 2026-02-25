@@ -1,0 +1,67 @@
+services:
+  # PHP-FPM Service (Laravel App)
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: pwl-app
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - pwl-network
+    depends_on:
+      - db
+
+  # Nginx Service
+  nginx:
+    image: nginx:alpine
+    container_name: pwl-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - pwl-network
+    depends_on:
+      - app
+
+  # MySQL Service
+  db:
+    image: mysql:8.0
+    container_name: pwl-db
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+    networks:
+      - pwl-network
+
+  # phpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pwl-phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:80"
+    networks:
+      - pwl-network
+    depends_on:
+      - db
+
+networks:
+  pwl-network:
+    driver: bridge
+
+volumes:
+  mysqldata:
+    driver: local
