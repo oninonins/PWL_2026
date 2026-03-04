@@ -1,0 +1,1 @@
+<html><body><h1>Daftar Produk Kategori: {{ $category }}</h1></body></html>
